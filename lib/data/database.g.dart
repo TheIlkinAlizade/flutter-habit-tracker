@@ -872,6 +872,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TrackersTable trackers = $TrackersTable(this);
   late final $TrackerEntriesTable trackerEntries = $TrackerEntriesTable(this);
+  late final TrackerDao trackerDao = TrackerDao(this as AppDatabase);
+  late final EntryDao entryDao = EntryDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();

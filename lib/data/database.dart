@@ -3,6 +3,8 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'daos/tracker_dao.dart';
+import 'daos/entry_dao.dart';
 
 part 'database.g.dart';
 
@@ -14,10 +16,8 @@ class Trackers extends Table {
   IntColumn get createdAt => integer()();
   IntColumn get archivedAt => integer().nullable()();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
-
   TextColumn get scheduleType =>
       text().withDefault(const Constant('daily'))();
-
   TextColumn get scheduleConfig => text().nullable()();
 }
 
@@ -25,7 +25,7 @@ class TrackerEntries extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get trackerId =>
       integer().references(Trackers, #id, onDelete: KeyAction.cascade)();
-  TextColumn get date => text()(); // 'YYYY-MM-DD'
+  TextColumn get date => text()();
   BoolColumn get completed => boolean().withDefault(const Constant(true))();
 
   @override
@@ -34,7 +34,10 @@ class TrackerEntries extends Table {
       ];
 }
 
-@DriftDatabase(tables: [Trackers, TrackerEntries])
+@DriftDatabase(
+  tables: [Trackers, TrackerEntries],
+  daos: [TrackerDao, EntryDao],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
