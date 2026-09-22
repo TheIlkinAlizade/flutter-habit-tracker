@@ -69,7 +69,7 @@ class _HeatmapPainter extends CustomPainter {
       final dy = row * (cellSize + spacing);
 
       final isDone = doneDates.contains(_dateStr(date));
-      paint.color = isDone ? color : Colors.white.withOpacity(0.06);
+      paint.color = isDone ? color : Colors.white.withValues(alpha: 0.06);
 
       final rect = RRect.fromRectAndRadius(
         Rect.fromLTWH(dx, dy, cellSize, cellSize),

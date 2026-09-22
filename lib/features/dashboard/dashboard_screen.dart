@@ -3,6 +3,7 @@ import '../../data/app_database_provider.dart';
 import '../../data/database.dart';
 import '../tracker_form/tracker_form_screen.dart';
 import '../tracker_detail/tracker_detail_screen.dart';
+import '../quick_tick/quick_tick_screen.dart';
 import 'tracker_card.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -11,7 +12,19 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Habit Tracker')),
+      appBar: AppBar(
+        title: const Text('Habit Tracker'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bolt),
+            tooltip: 'Quick tick',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const QuickTickScreen()),
+            ),
+          ),
+        ],
+      ),
       body: StreamBuilder<List<Tracker>>(
         stream: database.trackerDao.watchActiveTrackers(),
         builder: (context, snapshot) {

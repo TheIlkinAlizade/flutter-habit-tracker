@@ -69,9 +69,7 @@ class CalendarGrid extends StatelessWidget {
                   onTap: isFuture ? null : () => onDayTap(dateStr, isDone),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isDone
-                          ? color
-                          : Colors.white.withOpacity(isFuture ? 0.03 : 0.06),
+                      color: isDone ? color : Colors.white.withValues(alpha: isFuture ? 0.03 : 0.06),
                       borderRadius: BorderRadius.circular(8),
                       border: isToday
                           ? Border.all(color: Colors.white, width: 1.5)

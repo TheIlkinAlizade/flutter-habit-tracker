@@ -43,7 +43,7 @@ class TrackerCard extends StatelessWidget {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: color.withOpacity(0.18),
+                          color: color.withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(9),
                         ),
                         child: Icon(Icons.check, color: color, size: 18),
@@ -66,7 +66,7 @@ class TrackerCard extends StatelessWidget {
                           width: 30,
                           height: 30,
                           decoration: BoxDecoration(
-                            color: doneToday ? color : Colors.white.withOpacity(0.08),
+                            color: doneToday ? color : Colors.white.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
