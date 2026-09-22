@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../data/app_database_provider.dart';
 import '../../data/database.dart';
 import 'calendar_grid.dart';
+import '../../logic/streak_calculator.dart';
 
 class TrackerDetailScreen extends StatefulWidget {
   final Tracker tracker;
@@ -40,6 +41,13 @@ class _TrackerDetailScreenState extends State<TrackerDetailScreen> {
           final entries = snapshot.data ?? [];
           final doneDates = entries.map((e) => e.date).toSet();
 
+          final streaks = calculateStreaks(
+            doneDates: doneDates,
+            scheduleType: widget.tracker.scheduleType,
+            scheduleConfig: widget.tracker.scheduleConfig,
+            today: DateTime.now(),
+          );
+
           return Column(
             children: [
               Padding(
@@ -63,6 +71,16 @@ class _TrackerDetailScreenState extends State<TrackerDetailScreen> {
                       icon: const Icon(Icons.chevron_right),
                       onPressed: () => _shiftMonth(1),
                     ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Row(
+                  children: [
+                    _StreakBadge(label: 'Current', value: streaks.currentStreak, color: color),
+                    const SizedBox(width: 12),
+                    _StreakBadge(label: 'Longest', value: streaks.longestStreak, color: color),
                   ],
                 ),
               ),
@@ -90,5 +108,32 @@ class _TrackerDetailScreenState extends State<TrackerDetailScreen> {
       'July', 'August', 'September', 'October', 'November', 'December',
     ];
     return '${months[d.month - 1]} ${d.year}';
+  }
+}
+
+class _StreakBadge extends StatelessWidget {
+  final String label;
+  final int value;
+  final Color color;
+
+  const _StreakBadge({required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1D),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            Text('$value', style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.bold)),
+            Text(label, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+          ],
+        ),
+      ),
+    );
   }
 }
