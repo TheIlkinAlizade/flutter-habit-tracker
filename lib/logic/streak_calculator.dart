@@ -81,3 +81,50 @@ String _formatDate(DateTime date) {
   final d = date.day.toString().padLeft(2, '0');
   return '${date.year}-$m-$d';
 }
+
+class MonthStats {
+  final int completedCount;
+  final int scheduledCount;
+  final double completionPercent;
+
+  const MonthStats({
+    required this.completedCount,
+    required this.scheduledCount,
+    required this.completionPercent,
+  });
+}
+
+MonthStats calculateMonthStats({
+  required Set<String> doneDates,
+  required String scheduleType,
+  required String? scheduleConfig,
+  required DateTime month,
+  required DateTime today,
+}) {
+  final isCurrentMonth = month.year == today.year && month.month == today.month;
+  final lastDayToCheck = isCurrentMonth
+      ? today.day
+      : DateTime(month.year, month.month + 1, 0).day;
+
+  int completed = 0;
+  int scheduled = 0;
+
+  for (int day = 1; day <= lastDayToCheck; day++) {
+    final date = DateTime(month.year, month.month, day);
+    if (!isScheduledDay(date, scheduleType, scheduleConfig)) continue;
+
+    scheduled++;
+    final dateStr = _formatDate(date);
+    if (doneDates.contains(dateStr)) completed++;
+  }
+
+  final percent = scheduled == 0 ? 0.0 : completed / scheduled;
+
+  return MonthStats(
+    completedCount: completed,
+    scheduledCount: scheduled,
+    completionPercent: percent,
+  );
+}
+
+int calculateTotalDaysTracked(Set<String> doneDates) => doneDates.length;

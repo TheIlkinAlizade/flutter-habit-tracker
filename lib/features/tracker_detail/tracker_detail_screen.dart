@@ -3,6 +3,7 @@ import '../../data/app_database_provider.dart';
 import '../../data/database.dart';
 import 'calendar_grid.dart';
 import '../../logic/streak_calculator.dart';
+import '../stats/stats_screen.dart';
 
 class TrackerDetailScreen extends StatefulWidget {
   final Tracker tracker;
@@ -34,7 +35,16 @@ class _TrackerDetailScreenState extends State<TrackerDetailScreen> {
     final color = Color(widget.tracker.color);
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.tracker.name)),
+      appBar: AppBar(title: Text(widget.tracker.name),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => StatsScreen(tracker: widget.tracker)),
+            ),
+          ),
+        ],),
       body: StreamBuilder<List<TrackerEntry>>(
         stream: database.entryDao.watchEntriesForTracker(widget.tracker.id),
         builder: (context, snapshot) {
