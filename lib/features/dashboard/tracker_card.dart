@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/database.dart';
 import '../../data/app_database_provider.dart';
+import 'heatmap_strip.dart';
 
 class TrackerCard extends StatelessWidget {
   final Tracker tracker;
@@ -26,53 +27,62 @@ class TrackerCard extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.18),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.check, color: color, size: 20),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  tracker.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+          child: StreamBuilder<List<TrackerEntry>>(
+            stream: database.entryDao.watchEntriesForTracker(tracker.id),
+            builder: (context, snapshot) {
+              final entries = snapshot.data ?? [];
+              final doneDates = entries.map((e) => e.date).toSet();
+              final doneToday = doneDates.contains(_today);
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: Icon(Icons.check, color: color, size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          tracker.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => database.entryDao
+                            .toggleDay(tracker.id, _today, doneToday),
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: doneToday ? color : Colors.white.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.check,
+                            size: 16,
+                            color: doneToday ? Colors.black : Colors.white38,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-              StreamBuilder<List<TrackerEntry>>(
-                stream: database.entryDao.watchEntriesForTracker(tracker.id),
-                builder: (context, snapshot) {
-                  final entries = snapshot.data ?? [];
-                  final doneToday = entries.any((e) => e.date == _today);
-                  return GestureDetector(
-                    onTap: () => database.entryDao
-                        .toggleDay(tracker.id, _today, doneToday),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: doneToday ? color : Colors.white.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.check,
-                        size: 18,
-                        color: doneToday ? Colors.black : Colors.white38,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
+                  const SizedBox(height: 12),
+                  HeatmapStrip(doneDates: doneDates, color: color),
+                ],
+              );
+            },
           ),
         ),
       ),
