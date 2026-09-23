@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../data/app_database_provider.dart';
 import '../../data/database.dart';
 import '../../logic/streak_calculator.dart';
+import '../../data/icon_map.dart';
 
 class QuickTickScreen extends StatelessWidget {
   const QuickTickScreen({super.key});
@@ -99,11 +100,11 @@ class _QuickTickCard extends StatelessWidget {
                         width: 3,
                       ),
                     ),
-                    child: Icon(
-                      Icons.check,
-                      size: 72,
-                      color: doneToday ? Colors.black : Colors.white38,
-                    ),
+                  child: Icon(
+                    doneToday ? Icons.check : resolveTrackerIcon(tracker.icon),
+                    size: 72,
+                    color: doneToday ? Colors.black : Colors.white38,
+                  ),
                   ),
                 ),
                 const SizedBox(height: 32),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../data/database.dart';
 import '../../data/app_database_provider.dart';
 import 'heatmap_strip.dart';
+import '../../data/icon_map.dart';
 
 class TrackerCard extends StatelessWidget {
   final Tracker tracker;
@@ -46,7 +47,7 @@ class TrackerCard extends StatelessWidget {
                           color: color.withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(9),
                         ),
-                        child: Icon(Icons.check, color: color, size: 18),
+                        child: Icon(resolveTrackerIcon(tracker.icon), color: color, size: 18),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
