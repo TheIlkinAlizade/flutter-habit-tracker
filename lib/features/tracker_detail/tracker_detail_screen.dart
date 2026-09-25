@@ -111,9 +111,9 @@ class _TrackerDetailScreenState extends State<TrackerDetailScreen> {
                   visibleMonth: _visibleMonth,
                   doneDates: doneDates,
                   color: color,
+                  createdAt: DateTime.fromMillisecondsSinceEpoch(widget.tracker.createdAt),
                   onDayTap: (dateStr, currentlyDone) {
-                    database.entryDao
-                        .toggleDay(widget.tracker.id, dateStr, currentlyDone);
+                    database.entryDao.toggleDay(widget.tracker.id, dateStr, currentlyDone);
                   },
                 ),
               ),

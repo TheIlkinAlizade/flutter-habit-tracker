@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 class HeatmapStrip extends StatelessWidget {
   final Set<String> doneDates;
   final Color color;
+  final DateTime createdAt;
   final double height;
 
   const HeatmapStrip({
     super.key,
     required this.doneDates,
     required this.color,
+    required this.createdAt,
     this.height = 44,
   });
 
@@ -21,6 +23,7 @@ class HeatmapStrip extends StatelessWidget {
           painter: _HeatmapPainter(
             doneDates: doneDates,
             color: color,
+            createdAt: createdAt,
           ),
         );
       },
@@ -31,8 +34,13 @@ class HeatmapStrip extends StatelessWidget {
 class _HeatmapPainter extends CustomPainter {
   final Set<String> doneDates;
   final Color color;
+  final DateTime createdAt;
 
-  _HeatmapPainter({required this.doneDates, required this.color});
+  _HeatmapPainter({
+    required this.doneDates,
+    required this.color,
+    required this.createdAt,
+  });
 
   String _dateStr(DateTime d) {
     return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -49,6 +57,7 @@ class _HeatmapPainter extends CustomPainter {
 
     final today = DateTime.now();
     final todayNormalized = DateTime(today.year, today.month, today.day);
+    final createdAtNormalized = DateTime(createdAt.year, createdAt.month, createdAt.day);
 
     final totalDays = columns * rows;
     final startDate = todayNormalized.subtract(Duration(days: totalDays - 1));
@@ -69,7 +78,11 @@ class _HeatmapPainter extends CustomPainter {
       final dy = row * (cellSize + spacing);
 
       final isDone = doneDates.contains(_dateStr(date));
-      paint.color = isDone ? color : Colors.white.withValues(alpha: 0.06);
+      final beforeCreation = date.isBefore(createdAtNormalized);
+
+      paint.color = isDone
+          ? color
+          : Colors.white.withValues(alpha: beforeCreation ? 0.03 : 0.06);
 
       final rect = RRect.fromRectAndRadius(
         Rect.fromLTWH(dx, dy, cellSize, cellSize),
@@ -81,6 +94,8 @@ class _HeatmapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _HeatmapPainter oldDelegate) {
-    return oldDelegate.doneDates != doneDates || oldDelegate.color != color;
+    return oldDelegate.doneDates != doneDates ||
+        oldDelegate.color != color ||
+        oldDelegate.createdAt != createdAt;
   }
 }

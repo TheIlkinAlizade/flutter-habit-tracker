@@ -80,7 +80,11 @@ class TrackerCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  HeatmapStrip(doneDates: doneDates, color: color),
+                  HeatmapStrip(
+                    doneDates: doneDates,
+                    color: color,
+                    createdAt: DateTime.fromMillisecondsSinceEpoch(tracker.createdAt),
+                  ),
                 ],
               );
             },

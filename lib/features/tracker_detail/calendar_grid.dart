@@ -4,6 +4,7 @@ class CalendarGrid extends StatelessWidget {
   final DateTime visibleMonth;
   final Set<String> doneDates;
   final Color color;
+  final DateTime createdAt;
   final void Function(String dateStr, bool currentlyDone) onDayTap;
 
   const CalendarGrid({
@@ -11,6 +12,7 @@ class CalendarGrid extends StatelessWidget {
     required this.visibleMonth,
     required this.doneDates,
     required this.color,
+    required this.createdAt,
     required this.onDayTap,
   });
 
@@ -30,6 +32,9 @@ class CalendarGrid extends StatelessWidget {
       final now = DateTime.now();
       return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     }();
+
+    final createdAtStr =
+        '${createdAt.year}-${createdAt.month.toString().padLeft(2, '0')}-${createdAt.day.toString().padLeft(2, '0')}';
 
     return Padding(
       padding: const EdgeInsets.all(12),
@@ -64,12 +69,14 @@ class CalendarGrid extends StatelessWidget {
                 final isDone = doneDates.contains(dateStr);
                 final isToday = dateStr == todayStr;
                 final isFuture = dateStr.compareTo(todayStr) > 0;
+                final isBeforeCreation = dateStr.compareTo(createdAtStr) < 0;
+                final isDisabled = isFuture || isBeforeCreation;
 
                 return GestureDetector(
-                  onTap: isFuture ? null : () => onDayTap(dateStr, isDone),
+                  onTap: isDisabled ? null : () => onDayTap(dateStr, isDone),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isDone ? color : Colors.white.withValues(alpha: isFuture ? 0.03 : 0.06),
+                      color: isDone ? color : Colors.white.withValues(alpha: isDisabled ? 0.03 : 0.06),
                       borderRadius: BorderRadius.circular(8),
                       border: isToday
                           ? Border.all(color: Colors.white, width: 1.5)
@@ -81,7 +88,7 @@ class CalendarGrid extends StatelessWidget {
                         style: TextStyle(
                           color: isDone
                               ? Colors.black
-                              : (isFuture ? Colors.white24 : Colors.white70),
+                              : (isDisabled ? Colors.white24 : Colors.white70),
                           fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
                           fontSize: 13,
                         ),
