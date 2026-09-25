@@ -4,6 +4,7 @@ class HeatmapStrip extends StatelessWidget {
   final Set<String> doneDates;
   final Color color;
   final DateTime createdAt;
+  final int columns;
   final double height;
 
   const HeatmapStrip({
@@ -11,6 +12,7 @@ class HeatmapStrip extends StatelessWidget {
     required this.doneDates,
     required this.color,
     required this.createdAt,
+    required this.columns,
     this.height = 44,
   });
 
@@ -24,6 +26,7 @@ class HeatmapStrip extends StatelessWidget {
             doneDates: doneDates,
             color: color,
             createdAt: createdAt,
+            columns: columns,
           ),
         );
       },
@@ -35,11 +38,13 @@ class _HeatmapPainter extends CustomPainter {
   final Set<String> doneDates;
   final Color color;
   final DateTime createdAt;
+  final int columns;
 
   _HeatmapPainter({
     required this.doneDates,
     required this.color,
     required this.createdAt,
+    required this.columns,
   });
 
   String _dateStr(DateTime d) {
@@ -51,9 +56,9 @@ class _HeatmapPainter extends CustomPainter {
     const spacing = 3.0;
     const rows = 7;
 
-    final cellSize = (size.height - (rows - 1) * spacing) / rows;
-    final columns = ((size.width + spacing) / (cellSize + spacing)).floor();
     if (columns <= 0) return;
+
+    final cellSize = (size.width - (columns - 1) * spacing) / columns;
 
     final today = DateTime.now();
     final todayNormalized = DateTime(today.year, today.month, today.day);
@@ -61,7 +66,6 @@ class _HeatmapPainter extends CustomPainter {
 
     final totalDays = columns * rows;
     final startDate = todayNormalized.subtract(Duration(days: totalDays - 1));
-
     final gridStartOffset = (startDate.weekday - 1) % 7;
 
     final paint = Paint()..style = PaintingStyle.fill;
@@ -96,6 +100,7 @@ class _HeatmapPainter extends CustomPainter {
   bool shouldRepaint(covariant _HeatmapPainter oldDelegate) {
     return oldDelegate.doneDates != doneDates ||
         oldDelegate.color != color ||
-        oldDelegate.createdAt != createdAt;
+        oldDelegate.createdAt != createdAt ||
+        oldDelegate.columns != columns;
   }
 }
