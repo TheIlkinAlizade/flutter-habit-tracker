@@ -1,17 +1,55 @@
-# flutter_habit_tracker
+# Habit Tracker
 
-A new Flutter project.
+A habit and streak tracker built with Flutter. Create trackers for anything — reading, studying, exercise, side projects — tick off days on a calendar, and see streaks and stats build up over time.
 
-## Getting Started
+Everything is stored locally with SQLite. No account, no server, no sync.
 
-This project is a starting point for a Flutter application.
+## Features
 
-A few resources to get you started if this is your first Flutter project:
+- Create trackers with a name, color, icon, and repeat schedule (every day, specific weekdays, or a day of the month)
+- Tap any day on a calendar to mark it done or undone — past days included, nothing is locked
+- Current streak and longest streak per tracker, aware of the tracker's schedule
+- Completion percentage for the current month, total days tracked
+- Dashboard heatmap per tracker, similar to a GitHub contributions graph
+- A quick-tick screen for marking today's trackers done one after another
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Stack
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter
+- [drift](https://drift.simonbinder.eu/) (SQLite) for storage, with reactive streams instead of manual refresh logic
+- No state management library — screens subscribe directly to database streams
+
+## Project structure
+
+```
+lib/
+  data/
+    database.dart       # tables: Trackers, TrackerEntries
+    daos/                # one DAO per table
+  features/
+    dashboard/
+    tracker_form/
+    tracker_detail/
+    stats/
+    quick_tick/
+  logic/
+    streak_calculator.dart   # pure functions, no Flutter or DB imports
+```
+
+Dates are stored as plain `YYYY-MM-DD` strings rather than timestamps, since habits are day-granular and this avoids timezone issues entirely. A tracker can only have one entry per day, enforced by a unique constraint at the database level rather than in app code. Deleting a tracker archives it instead of removing it, so history isn't lost by accident.
+
+## Running it
+
+```bash
+git clone https://github.com/TheIlkinAlizade/flutter-habit-tracker.git
+cd flutter_habit_tracker
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+flutter run
+```
+
+Requires the Flutter SDK.
+
+## License
+
+MIT — free to use, modify, or copy.
