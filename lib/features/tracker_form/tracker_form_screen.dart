@@ -1,21 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:drift/drift.dart' hide Column;
 import '../../data/app_database_provider.dart';
+import '../../data/database.dart';
 import '../../data/icon_map.dart';
 
 class TrackerFormScreen extends StatefulWidget {
-  const TrackerFormScreen({super.key});
+  final Tracker? existingTracker;
+
+  const TrackerFormScreen({super.key, this.existingTracker});
 
   @override
   State<TrackerFormScreen> createState() => _TrackerFormScreenState();
 }
 
 class _TrackerFormScreenState extends State<TrackerFormScreen> {
-  final _nameController = TextEditingController();
-  int _selectedColor = 0xFF4C8DFF;
-  String _selectedIcon = 'check';
-  String _scheduleType = 'daily';
-  final Set<int> _selectedWeekdays = {};
-  int _monthlyDay = 1;
+  late final TextEditingController _nameController;
+  late int _selectedColor;
+  late String _selectedIcon;
+  late String _scheduleType;
+  late Set<int> _selectedWeekdays;
+  late int _monthlyDay;
+
+  bool get _isEditing => widget.existingTracker != null;
 
   static const _colorOptions = [
     0xFF4C8DFF,
@@ -24,8 +30,29 @@ class _TrackerFormScreenState extends State<TrackerFormScreen> {
     0xFF37D67A,
     0xFFFFB020,
   ];
-  
+
   static const _weekdayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.existingTracker;
+
+    _nameController = TextEditingController(text: existing?.name ?? '');
+    _selectedColor = existing?.color ?? 0xFF4C8DFF;
+    _selectedIcon = existing?.icon ?? 'check';
+    _scheduleType = existing?.scheduleType ?? 'daily';
+    _monthlyDay = 1;
+    _selectedWeekdays = {};
+
+    if (existing != null) {
+      if (existing.scheduleType == 'weekly_days' && existing.scheduleConfig != null) {
+        _selectedWeekdays = existing.scheduleConfig!.split(',').map(int.parse).toSet();
+      } else if (existing.scheduleType == 'monthly' && existing.scheduleConfig != null) {
+        _monthlyDay = int.parse(existing.scheduleConfig!);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -57,20 +84,73 @@ class _TrackerFormScreenState extends State<TrackerFormScreen> {
       return;
     }
 
-    await database.trackerDao.createTracker(
-      name: name,
-      color: _selectedColor,
-      icon: _selectedIcon,
-      scheduleType: _scheduleType,
-      scheduleConfig: _buildScheduleConfig(),
-    );
+    if (_isEditing) {
+      final updated = widget.existingTracker!.copyWith(
+        name: name,
+        color: _selectedColor,
+        icon: Value(_selectedIcon),
+        scheduleType: _scheduleType,
+        scheduleConfig: Value(_buildScheduleConfig()),
+      );
+      await database.trackerDao.updateTracker(updated);
+    } else {
+      await database.trackerDao.createTracker(
+        name: name,
+        color: _selectedColor,
+        icon: _selectedIcon,
+        scheduleType: _scheduleType,
+        scheduleConfig: _buildScheduleConfig(),
+      );
+    }
     if (mounted) Navigator.pop(context);
+  }
+
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1D),
+        title: const Text('Delete tracker?', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'This hides it from your dashboard but keeps its history. You can restore it later.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await database.trackerDao.archiveTracker(widget.existingTracker!.id);
+      if (mounted) {
+        Navigator.pop(context);
+        Navigator.pop(context);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New Tracker')),
+      appBar: AppBar(
+        title: Text(_isEditing ? 'Edit Tracker' : 'New Tracker'),
+        actions: _isEditing
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: _confirmDelete,
+                ),
+              ]
+            : null,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -78,7 +158,7 @@ class _TrackerFormScreenState extends State<TrackerFormScreen> {
           children: [
             TextField(
               controller: _nameController,
-              autofocus: true,
+              autofocus: !_isEditing,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 labelText: 'Tracker name',
@@ -213,9 +293,9 @@ class _TrackerFormScreenState extends State<TrackerFormScreen> {
               width: double.infinity,
               child: FilledButton(
                 onPressed: _save,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text('Create'),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(_isEditing ? 'Save Changes' : 'Create'),
                 ),
               ),
             ),
