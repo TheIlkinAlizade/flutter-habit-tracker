@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+enum HeatmapRange { week, month, year }
+
 class HeatmapStrip extends StatelessWidget {
   final Set<String> doneDates;
   final Color color;
   final DateTime createdAt;
-  final int columns;
+  final HeatmapRange range;
   final double height;
 
   const HeatmapStrip({
@@ -12,24 +14,30 @@ class HeatmapStrip extends StatelessWidget {
     required this.doneDates,
     required this.color,
     required this.createdAt,
-    required this.columns,
+    required this.range,
     this.height = 44,
   });
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return CustomPaint(
-          size: Size(constraints.maxWidth, height),
-          painter: _HeatmapPainter(
-            doneDates: doneDates,
-            color: color,
-            createdAt: createdAt,
-            columns: columns,
-          ),
-        );
-      },
+    return ClipRect(
+      child: SizedBox(
+        height: height,
+        width: double.infinity,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return CustomPaint(
+              painter: _HeatmapPainter(
+                doneDates: doneDates,
+                color: color,
+                createdAt: createdAt,
+                range: range,
+                availableWidth: constraints.maxWidth,
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }
@@ -38,17 +46,31 @@ class _HeatmapPainter extends CustomPainter {
   final Set<String> doneDates;
   final Color color;
   final DateTime createdAt;
-  final int columns;
+  final HeatmapRange range;
+  final double availableWidth;
 
   _HeatmapPainter({
     required this.doneDates,
     required this.color,
     required this.createdAt,
-    required this.columns,
+    required this.range,
+    required this.availableWidth,
   });
 
   String _dateStr(DateTime d) {
     return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  int _resolveColumns(double cellSize, double spacing) {
+    switch (range) {
+      case HeatmapRange.week:
+        return 1;
+      case HeatmapRange.month:
+        return 5;
+      case HeatmapRange.year:
+        final maxThatFit = ((availableWidth + spacing) / (cellSize + spacing)).floor();
+        return maxThatFit.clamp(1, 53);
+    }
   }
 
   @override
@@ -56,9 +78,9 @@ class _HeatmapPainter extends CustomPainter {
     const spacing = 3.0;
     const rows = 7;
 
+    final cellSize = (size.height - (rows - 1) * spacing) / rows;
+    final columns = _resolveColumns(cellSize, spacing);
     if (columns <= 0) return;
-
-    final cellSize = (size.width - (columns - 1) * spacing) / columns;
 
     final today = DateTime.now();
     final todayNormalized = DateTime(today.year, today.month, today.day);
@@ -101,6 +123,7 @@ class _HeatmapPainter extends CustomPainter {
     return oldDelegate.doneDates != doneDates ||
         oldDelegate.color != color ||
         oldDelegate.createdAt != createdAt ||
-        oldDelegate.columns != columns;
+        oldDelegate.range != range ||
+        oldDelegate.availableWidth != availableWidth;
   }
 }

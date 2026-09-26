@@ -4,8 +4,6 @@ import '../../data/app_database_provider.dart';
 import '../../data/icon_map.dart';
 import 'heatmap_strip.dart';
 
-enum HeatmapRange { week, month }
-
 class TrackerCard extends StatefulWidget {
   final Tracker tracker;
   final VoidCallback onTap;
@@ -17,11 +15,22 @@ class TrackerCard extends StatefulWidget {
 }
 
 class _TrackerCardState extends State<TrackerCard> {
-  HeatmapRange _range = HeatmapRange.month;
+  HeatmapRange _range = HeatmapRange.year;
 
   String get _today {
     final now = DateTime.now();
     return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+  }
+
+  String _rangeLabel(HeatmapRange r) {
+    switch (r) {
+      case HeatmapRange.week:
+        return 'Week';
+      case HeatmapRange.month:
+        return 'Month';
+      case HeatmapRange.year:
+        return 'Year';
+    }
   }
 
   @override
@@ -89,71 +98,49 @@ class _TrackerCardState extends State<TrackerCard> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      _RangeChip(
-                        label: 'Week',
-                        selected: _range == HeatmapRange.week,
-                        color: color,
-                        onTap: () => setState(() => _range = HeatmapRange.week),
-                      ),
-                      const SizedBox(width: 6),
-                      _RangeChip(
-                        label: 'Month',
-                        selected: _range == HeatmapRange.month,
-                        color: color,
-                        onTap: () => setState(() => _range = HeatmapRange.month),
+                      PopupMenuButton<HeatmapRange>(
+                        color: const Color(0xFF232326),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        onSelected: (value) => setState(() => _range = value),
+                        itemBuilder: (context) => HeatmapRange.values.map((r) {
+                          return PopupMenuItem(
+                            value: r,
+                            child: Text(
+                              _rangeLabel(r),
+                              style: TextStyle(
+                                color: r == _range ? color : Colors.white70,
+                                fontWeight: r == _range ? FontWeight.w600 : FontWeight.normal,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _rangeLabel(_range),
+                              style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                            Icon(Icons.expand_more, size: 16, color: color),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   HeatmapStrip(
                     doneDates: doneDates,
                     color: color,
                     createdAt: DateTime.fromMillisecondsSinceEpoch(tracker.createdAt),
-                    columns: _range == HeatmapRange.week ? 1 : 5,
+                    range: _range,
                   ),
                 ],
               );
             },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RangeChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _RangeChip({
-    required this.label,
-    required this.selected,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: selected ? color : Colors.white38,
           ),
         ),
       ),
