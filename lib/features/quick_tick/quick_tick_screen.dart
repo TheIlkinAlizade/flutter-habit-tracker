@@ -57,6 +57,8 @@ class _QuickTickCard extends StatelessWidget {
         final entries = snapshot.data ?? [];
         final doneDates = entries.map((e) => e.date).toSet();
         final doneToday = doneDates.contains(_today);
+        final isDueToday = !doneToday &&
+          isScheduledDay(DateTime.now(), tracker.scheduleType, tracker.scheduleConfig);
 
         final streaks = calculateStreaks(
           doneDates: doneDates,
@@ -93,10 +95,16 @@ class _QuickTickCard extends StatelessWidget {
                     width: 180,
                     height: 180,
                     decoration: BoxDecoration(
-                      color: doneToday ? color : Colors.white.withValues(alpha: 0.06),
+                      color: doneToday
+                          ? color
+                          : (isDueToday
+                              ? const Color(0xFFFFC107).withValues(alpha: 0.12)
+                              : Colors.white.withValues(alpha: 0.06)),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: doneToday ? color : Colors.white24,
+                        color: doneToday
+                            ? color
+                            : (isDueToday ? const Color(0xFFFFC107) : Colors.white24),
                         width: 3,
                       ),
                     ),
@@ -109,8 +117,13 @@ class _QuickTickCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  doneToday ? 'Done for today' : 'Tap to mark done',
-                  style: const TextStyle(color: Colors.white38, fontSize: 14),
+                  doneToday
+                      ? 'Done for today'
+                      : (isDueToday ? 'Scheduled for today' : 'Tap to mark done'),
+                  style: TextStyle(
+                    color: isDueToday && !doneToday ? const Color(0xFFFFC107) : Colors.white38,
+                    fontSize: 14,
+                  ),
                 ),
                 const SizedBox(height: 64),
                 const Icon(Icons.keyboard_arrow_up, color: Colors.white24),

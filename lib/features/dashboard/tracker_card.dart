@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../data/database.dart';
 import '../../data/app_database_provider.dart';
 import '../../data/icon_map.dart';
+import '../../logic/streak_calculator.dart';
 import 'heatmap_strip.dart';
 
 class TrackerCard extends StatefulWidget {
@@ -53,6 +54,8 @@ class _TrackerCardState extends State<TrackerCard> {
               final entries = snapshot.data ?? [];
               final doneDates = entries.map((e) => e.date).toSet();
               final doneToday = doneDates.contains(_today);
+              final isDueToday = !doneToday &&
+                isScheduledDay(DateTime.now(), tracker.scheduleType, tracker.scheduleConfig);
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,13 +89,22 @@ class _TrackerCardState extends State<TrackerCard> {
                           width: 30,
                           height: 30,
                           decoration: BoxDecoration(
-                            color: doneToday ? color : Colors.white.withValues(alpha: 0.08),
+                            color: doneToday
+                                ? color
+                                : (isDueToday
+                                    ? const Color(0xFFFFC107).withValues(alpha: 0.18)
+                                    : Colors.white.withValues(alpha: 0.08)),
                             borderRadius: BorderRadius.circular(8),
+                            border: (!doneToday && isDueToday)
+                                ? Border.all(color: const Color(0xFFFFC107), width: 1.5)
+                                : null,
                           ),
                           child: Icon(
                             Icons.check,
                             size: 16,
-                            color: doneToday ? Colors.black : Colors.white38,
+                            color: doneToday
+                                ? Colors.black
+                                : (isDueToday ? const Color(0xFFFFC107) : Colors.white38),
                           ),
                         ),
                       ),
