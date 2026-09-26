@@ -33,6 +33,7 @@ class HeatmapStrip extends StatelessWidget {
                 createdAt: createdAt,
                 range: range,
                 availableWidth: constraints.maxWidth,
+                availableHeight: height,
               ),
             );
           },
@@ -48,6 +49,7 @@ class _HeatmapPainter extends CustomPainter {
   final DateTime createdAt;
   final HeatmapRange range;
   final double availableWidth;
+  final double availableHeight;
 
   _HeatmapPainter({
     required this.doneDates,
@@ -55,67 +57,101 @@ class _HeatmapPainter extends CustomPainter {
     required this.createdAt,
     required this.range,
     required this.availableWidth,
+    required this.availableHeight,
   });
 
   String _dateStr(DateTime d) {
     return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   }
 
-  int _resolveColumns(double cellSize, double spacing) {
-    switch (range) {
-      case HeatmapRange.week:
-        return 1;
-      case HeatmapRange.month:
-        return 5;
-      case HeatmapRange.year:
-        final maxThatFit = ((availableWidth + spacing) / (cellSize + spacing)).floor();
-        return maxThatFit.clamp(1, 53);
-    }
-  }
-
   @override
   void paint(Canvas canvas, Size size) {
     const spacing = 3.0;
-    const rows = 7;
-
-    final cellSize = (size.height - (rows - 1) * spacing) / rows;
-    final columns = _resolveColumns(cellSize, spacing);
-    if (columns <= 0) return;
-
     final today = DateTime.now();
     final todayNormalized = DateTime(today.year, today.month, today.day);
     final createdAtNormalized = DateTime(createdAt.year, createdAt.month, createdAt.day);
-
-    final totalDays = columns * rows;
-    final startDate = todayNormalized.subtract(Duration(days: totalDays - 1));
-    final gridStartOffset = (startDate.weekday - 1) % 7;
-
     final paint = Paint()..style = PaintingStyle.fill;
 
-    for (int i = 0; i < totalDays; i++) {
-      final date = startDate.add(Duration(days: i));
+    if (range == HeatmapRange.year) {
+      const rows = 7;
+      final cellSize = (availableHeight - (rows - 1) * spacing) / rows;
+      final columns = ((availableWidth + spacing) / (cellSize + spacing))
+          .floor()
+          .clamp(1, 53);
+      final totalDays = columns * rows;
+      final startDate = todayNormalized.subtract(Duration(days: totalDays - 1));
+
+      for (int i = 0; i < totalDays; i++) {
+        final date = startDate.add(Duration(days: i));
+        if (date.isAfter(todayNormalized)) break;
+        final col = i ~/ rows;
+        final row = i % rows;
+        _drawCell(canvas, paint, date, col * (cellSize + spacing),
+            row * (cellSize + spacing), cellSize, doneDates, color, createdAtNormalized);
+      }
+      return;
+    }
+
+    late DateTime gridStart;
+    late int leadingBlanks;
+    late int numRows;
+
+    if (range == HeatmapRange.week) {
+      gridStart = todayNormalized.subtract(Duration(days: todayNormalized.weekday - 1));
+      leadingBlanks = 0;
+      numRows = 1;
+    } else {
+      final firstOfMonth = DateTime(today.year, today.month, 1);
+      leadingBlanks = (firstOfMonth.weekday - 1) % 7;
+      final daysInMonth = DateTime(today.year, today.month + 1, 0).day;
+      numRows = ((leadingBlanks + daysInMonth) / 7).ceil();
+      gridStart = firstOfMonth.subtract(Duration(days: leadingBlanks));
+    }
+
+    const cols = 7;
+    final cellHeight = (availableHeight - (numRows - 1) * spacing) / numRows;
+    final cellWidth = (availableWidth - (cols - 1) * spacing) / cols;
+    final cellSize = cellHeight < cellWidth ? cellHeight : cellWidth;
+
+    final totalCells = numRows * cols;
+
+    for (int i = 0; i < totalCells; i++) {
+      if (range == HeatmapRange.month && i < leadingBlanks) continue;
+
+      final date = gridStart.add(Duration(days: i));
       if (date.isAfter(todayNormalized)) break;
 
-      final cellIndex = i + gridStartOffset;
-      final col = cellIndex ~/ rows;
-      final row = cellIndex % rows;
+      final row = i ~/ cols;
+      final col = i % cols;
 
-      final dx = col * (cellSize + spacing);
-      final dy = row * (cellSize + spacing);
-
-      final isDone = doneDates.contains(_dateStr(date));
-      final beforeCreation = date.isBefore(createdAtNormalized);
-
-      paint.color = isDone
-          ? color
-          : Colors.white.withValues(alpha: beforeCreation ? 0.03 : 0.06);
-
-      final rect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(dx, dy, cellSize, cellSize),
-        Radius.circular(cellSize * 0.25),
-      );
-      canvas.drawRRect(rect, paint);
+      _drawCell(canvas, paint, date, col * (cellSize + spacing),
+          row * (cellSize + spacing), cellSize, doneDates, color, createdAtNormalized);
     }
+  }
+
+  void _drawCell(
+    Canvas canvas,
+    Paint paint,
+    DateTime date,
+    double dx,
+    double dy,
+    double cellSize,
+    Set<String> doneDates,
+    Color color,
+    DateTime createdAtNormalized,
+  ) {
+    final isDone = doneDates.contains(_dateStr(date));
+    final beforeCreation = date.isBefore(createdAtNormalized);
+
+    paint.color = isDone
+        ? color
+        : Colors.white.withValues(alpha: beforeCreation ? 0.03 : 0.06);
+
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(dx, dy, cellSize, cellSize),
+      Radius.circular(cellSize * 0.25),
+    );
+    canvas.drawRRect(rect, paint);
   }
 
   @override
