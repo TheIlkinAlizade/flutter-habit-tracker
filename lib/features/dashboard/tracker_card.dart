@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../data/database.dart';
 import '../../data/app_database_provider.dart';
 import '../../data/icon_map.dart';
+import '../../data/heatmap_range_prefs.dart';
 import '../../logic/streak_calculator.dart';
 import 'heatmap_strip.dart';
 
@@ -17,6 +18,17 @@ class TrackerCard extends StatefulWidget {
 
 class _TrackerCardState extends State<TrackerCard> {
   HeatmapRange _range = HeatmapRange.year;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedRange();
+  }
+
+  Future<void> _loadSavedRange() async {
+    final saved = await HeatmapRangePrefs.load(widget.tracker.id);
+    if (mounted) setState(() => _range = saved);
+  }
 
   String get _today {
     final now = DateTime.now();
@@ -117,7 +129,10 @@ class _TrackerCardState extends State<TrackerCard> {
                       PopupMenuButton<HeatmapRange>(
                         color: const Color(0xFF232326),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        onSelected: (value) => setState(() => _range = value),
+                        onSelected: (value) {
+                          setState(() => _range = value);
+                          HeatmapRangePrefs.save(widget.tracker.id, value);
+                        },
                         itemBuilder: (context) => HeatmapRange.values.map((r) {
                           return PopupMenuItem(
                             value: r,
